@@ -31,6 +31,269 @@
 |16 | Cache‑Control Misconfigured | Info | 525 | Sensitive responses might be cached. | Use `Cache-Control: no-store, no-cache, must-revalidate`. |
 |17 | User‑Controllable Attribute | Info | 79 | Potential reflected/stored XSS vector. | Strict input validation & output encoding. |
 
+## 1. Executive Summary
+
+| **Metric**                  | **Value** |
+|----------------------------|-----------|
+| Total Issues Identified    | 17        |
+| Critical Issues            | 0         |
+| High-Risk Issues           | 0         |
+| Medium-Risk Issues         | 3         |
+| Low-Risk Issues            | 7         |
+| Informational Issues       | 7         |
+| Remediation Status         | Pending   |
+
+### 🔑 Key Takeaway
+
+The security assessment identified **3 medium-risk vulnerabilities**, including:
+
+- Missing **Content Security Policy (CSP)**
+- Outdated **Bootstrap library** (CVE-2024-6484)
+
+These require **prioritized remediation**.
+
+While **no critical or high-risk issues** were found, the report includes:
+
+- **7 low-risk misconfigurations**  
+  *(e.g., insecure cookies, missing security headers)*
+- **7 informational findings**  
+  *(e.g., authentication flow details)*
+
+Addressing these findings will help strengthen the overall **security posture** of the application.
+
+## 2. Summary of Findings
+
+| **Risk Level** | **Number of Issues** | **Example Vulnerability** |
+|----------------|----------------------|----------------------------|
+| Critical       | 0                    | N/A (No critical issues found) |
+| High           | 0                    | N/A (No high-risk issues found) |
+| Medium         | 3                    | 1. Missing Content Security Policy (CSP) Header  
+|                |                      | 2. Vulnerable JS Library (Bootstrap 3.4.1 - CVE-2024-6484)  
+|                |                      | 3. Missing Anti-Clickjacking Header (X-Frame-Options) |
+| Low            | 7                    | 1. Server Leaks Version Info (Apache/PHP)  
+|                |                      | 2. Missing HSTS Header  
+|                |                      | 3. Cookies Without Secure/SameSite Attributes  
+|                |                      | 4. Missing X-Content-Type-Options Header |
+| Informational  | 7                    | 1. Authentication Request Identified  
+|                |                      | 2. Big Redirect with Potential Info Leak  
+|                |                      | 3. Server Banner Exposure |
+
+### 🧐 Key Observations
+
+- **Top Risks:**
+  - **Medium:** Missing security headers (e.g., CSP, X-Frame-Options) and usage of an outdated library (Bootstrap 3.4.1).
+  - **Low:** Predominantly cookie misconfigurations and server information leaks.
+
+- **No Critical or High-Risk Issues:**
+  - No immediate exploitation vectors such as **Remote Code Execution (RCE)** or **SQL Injection (SQLi)** were identified.
+
+## 3. Detailed Findings
+
+---
+
+### 1. Missing Content Security Policy (CSP) Header  
+**Severity:** Medium  
+
+**Description:**  
+The application does not implement a Content Security Policy, leaving it vulnerable to Cross-Site Scripting (XSS) and data injection attacks.
+
+**Affected URLs:**
+- https://vendor.iium.edu.my/sitemap.xml  
+- https://vendor.iium.edu.my/
+
+**Business Impact:**  
+Attackers could inject malicious scripts to steal user data or deface the website.
+
+**OWASP Reference:**  
+[OWASP A05:2021 - Security Misconfiguration](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/)
+
+**Recommendation:**  
+Add a CSP header like:  
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'
+
+**Prevention Strategy:**
+- Implement CSP in server configurations.
+- Regularly audit headers using security tools.
+
+**Responsible Team:** DevOps  
+**Target Remediation Date:** 2025-07-31
+
+---
+
+### 2. Vulnerable JavaScript Library (Bootstrap 3.4.1)  
+**Severity:** Medium  
+
+**Description:**  
+An outdated Bootstrap version (3.4.1) with known vulnerabilities (CVE-2024-6484) is in use.
+
+**Affected URL:**
+- https://vendor.iium.edu.my/assets/b635246e/js/bootstrap.js
+
+**Business Impact:**  
+Exploitable vulnerabilities could compromise user sessions or lead to DOM-based attacks.
+
+**OWASP Reference:**  
+[OWASP A06:2021 - Vulnerable Components](https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/)
+
+**Recommendation:**  
+Upgrade to **Bootstrap 5.x** or later.
+
+**Prevention Strategy:**
+- Establish a patch management process.
+- Use dependency scanners (e.g., OWASP Dependency Check).
+
+**Responsible Team:** Frontend Development  
+**Target Remediation Date:** 2025-07-15
+
+---
+
+### 3. Missing Anti-Clickjacking Header  
+**Severity:** Medium  
+
+**Description:**  
+Missing `X-Frame-Options` or `CSP frame-ancestors` directive exposes the site to clickjacking.
+
+**Affected URL:**
+- https://vendor.iium.edu.my/
+
+**Business Impact:**  
+Attackers could embed the site in iframes to trick users into unintended actions.
+
+**OWASP Reference:**  
+[OWASP A05:2021 - Security Misconfiguration](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/)
+
+**Recommendation:**  
+Add the following header:  X-Frame-Options: DENY 
+
+
+**Prevention Strategy:**
+- Include headers in all responses.
+- Test with tools like ZAP or Burp Suite.
+
+**Responsible Team:** DevOps  
+**Target Remediation Date:** 2025-07-31
+
+---
+
+### 4. Server Version Information Leak  
+**Severity:** Low  
+
+**Description:**  
+Server headers expose `Apache/2.4.6 (CentOS)` and `PHP/7.4.27`, revealing outdated software versions.
+
+**Affected URLs:**  
+All endpoints (e.g., `/robots.txt`, `/adm/site/login`)
+
+**Business Impact:**  
+Attackers can target known vulnerabilities in these versions.
+
+**OWASP Reference:**  
+[OWASP A01:2021 - Information Exposure](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
+
+**Recommendation:**  
+Suppress headers in Apache config:
+ServerTokens Prod
+ServerSignature Off
+
+
+**Prevention Strategy:**
+- Regular server hardening audits.
+
+**Responsible Team:** Infrastructure  
+**Target Remediation Date:** 2025-08-15
+
+---
+
+### 5. Missing Secure/SameSite Cookie Attributes  
+**Severity:** Low  
+
+**Description:**  
+Cookies like `_csrf-backend` lack `Secure` and `SameSite` attributes.
+
+**Affected URLs:**  
+Login/session-related endpoints.
+
+**Business Impact:**  
+Increased risk of CSRF attacks or cookie theft over HTTP.
+
+**OWASP Reference:**  
+[OWASP A01:2021 - Broken Access Control](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
+
+**Recommendation:**  
+Update cookies:
+Set-Cookie: _csrf-backend=...; Secure; HttpOnly; SameSite=Strict
+
+
+**Prevention Strategy:**
+- Conduct code reviews for cookie settings.
+
+**Responsible Team:** Backend Development  
+**Target Remediation Date:** 2025-08-01
+
+## 4. Recommendations & Next Steps
+
+### Immediate Actions
+1. **Remediation Priorities**:
+   - [ ] Address all **Medium** risks within 30 days (focus order):
+     1. Upgrade Bootstrap library (CVE-2024-6484)
+     2. Implement CSP and `X-Frame-Options` headers
+     3. Fix cookie security attributes (`Secure`, `SameSite`)
+
+### Ongoing Improvements
+2. **Security Integration**:
+   - [ ] Adopt secure coding standards (OWASP ASVS)
+   - [ ] Implement automated security headers (via web server/config)
+   - [ ] Establish dependency update process (e.g., Dependabot)
+
+3. **Testing & Compliance**:
+   - [ ] Re-scan after fixes (ZAP baseline scan)
+   - [ ] Schedule **quarterly** full scans + **monthly** header/dependency checks
+   - [ ] Conduct annual penetration testing (external validation)
+
+### Team Responsibilities
+| Action Item               | Owner          | Timeline        |
+|---------------------------|----------------|-----------------|
+| Bootstrap upgrade         | Frontend Team  | 2025-07-15      |
+| Header implementation     | DevOps         | 2025-07-31      |
+| Cookie fixes              | Backend Team   | 2025-08-01      |
+| First re-test             | Security Team  | 2025-08-15      |
+
+## Appendix: Technical Details
+
+### A. Scan Configuration
+| Parameter          | Value                          |
+|--------------------|--------------------------------|
+| Tool Version       | ZAP 2.16.1                     |
+| Scan Type          | Automated Passive Scan         |
+| Scope              | `https://vendor.iium.edu.my`   |
+| Included Contexts  | All (no contexts excluded)     |
+| Excluded URLs      | None                           |
+| Risk Threshold     | Medium+ (Low/Info logged)      |
+
+### B. Scanned URLs (Sample)
+1. `https://vendor.iium.edu.my/`
+2. `https://vendor.iium.edu.my/sitemap.xml`  
+3. `https://vendor.iium.edu.my/adm/site/login`  
+4. `https://vendor.iium.edu.my/assets/*`  
+*(Full list available in `scan_urls.txt`)*
+
+### C. Complete Findings List
+| ID     | Risk       | Vulnerability Type               | Instances | Status     |
+|--------|------------|-----------------------------------|-----------|------------|
+| VLN-01 | Medium     | Missing CSP Header               | 2         | Open       |
+| VLN-02 | Medium     | Vulnerable JS Library (CVE-2024-6484) | 1    | Open       |
+| VLN-03 | Medium     | Missing X-Frame-Options          | 1         | Open       |
+| VLN-04 | Low        | Server Version Disclosure        | 21        | Open       |
+| VLN-05 | Low        | Missing HSTS Header              | 1         | Open       |
+| ...    | ...        | ...                               | ...       | ...        |
+*(17 total items - full technical details available in `zap_report.xml`)*
+
+### D. Additional Resources
+- [OWASP ZAP Documentation](https://www.zaproxy.org/docs/)
+- [CVE-2024-6484 Details](https://nvd.nist.gov/vuln/detail/CVE-2024-6484)
+- [Security Headers Guide](https://securityheaders.com/)
+
+  
 ## 🔐 fas.iium.edu.my
 
 | No | Vulnerability | Risk | CWE | Issue Summary | Recommended Fix |
