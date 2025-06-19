@@ -270,7 +270,7 @@ Set-Cookie: _csrf-backend=...; Secure; HttpOnly; SameSite=Strict
 | Excluded URLs      | None                           |
 | Risk Threshold     | Medium+ (Low/Info logged)      |
 
-### B. Scanned URLs (Sample)
+### B. Scanned URLs
 1. `https://vendor.iium.edu.my/`
 2. `https://vendor.iium.edu.my/sitemap.xml`  
 3. `https://vendor.iium.edu.my/adm/site/login`  
@@ -278,15 +278,31 @@ Set-Cookie: _csrf-backend=...; Secure; HttpOnly; SameSite=Strict
 *(Full list available in `scan_urls.txt`)*
 
 ### C. Complete Findings List
-| ID     | Risk       | Vulnerability Type               | Instances | Status     |
-|--------|------------|-----------------------------------|-----------|------------|
-| VLN-01 | Medium     | Missing CSP Header               | 2         | Open       |
-| VLN-02 | Medium     | Vulnerable JS Library (CVE-2024-6484) | 1    | Open       |
-| VLN-03 | Medium     | Missing X-Frame-Options          | 1         | Open       |
-| VLN-04 | Low        | Server Version Disclosure        | 21        | Open       |
-| VLN-05 | Low        | Missing HSTS Header              | 1         | Open       |
-| ...    | ...        | ...                               | ...       | ...        |
-*(17 total items - full technical details available in `zap_report.xml`)*
+
+| ID     | Risk Level | Vulnerability Type                          | Instances | Affected Components               | Status  |
+|--------|------------|---------------------------------------------|-----------|-----------------------------------|---------|
+| VLN-01 | Medium     | Missing Content Security Policy (CSP) Header | 2        | All pages                         | Open    |
+| VLN-02 | Medium     | Vulnerable JS Library (Bootstrap 3.4.1)      | 1        | `/assets/b635246e/js/bootstrap.js`| Open    |
+| VLN-03 | Medium     | Missing X-Frame-Options Header               | 1        | Homepage                          | Open    |
+| VLN-04 | Low        | Server Version Disclosure (Apache/2.4.6)     | 21       | All responses                     | Open    |
+| VLN-05 | Low        | Missing Strict-Transport-Security Header     | 1        | HTTPS endpoints                   | Open    |
+| VLN-06 | Low        | Cookie Without Secure Flag                   | 3        | `_csrf-backend` cookie            | Open    |
+| VLN-07 | Low        | Cookie Without SameSite Attribute            | 1        | `advanced-frontend` cookie        | Open    |
+| VLN-08 | Low        | X-Content-Type-Options Header Missing        | 34       | All pages                         | Open    |
+| VLN-09 | Low        | Information Disclosure in Comments           | 5        | HTML source                       | Open    |
+| VLN-10 | Low        | Big Redirect with Sensitive Data             | 1        | `/adm/cas/auth/login`             | Open    |
+| VLN-11 | Info       | Modern Web Application Detection             | 5        | Frontend frameworks               | Reviewed|
+| VLN-12 | Info       | Authentication Request Identified            | 2        | `/site/login`                     | Reviewed|
+| VLN-13 | Info       | Session Management Response Detected         | 5        | Login/logout flows                | Reviewed|
+| VLN-14 | Info       | Cache-Control Directives Need Review         | 15       | Static assets                     | Reviewed|
+| VLN-15 | Info       | User Agent Fuzzer Detection                  | 12       | Application headers               | Reviewed|
+| VLN-16 | Info       | HTML Element Attribute Control               | 6        | Form inputs                       | Reviewed|
+| VLN-17 | Info       | Suspicious Comments in Code                  | 5        | JavaScript files                  | Reviewed|
+
+**Legend:**
+- 🔴 Open (needs remediation)
+- 🟡 Reviewed (requires monitoring)
+- 🟢 Closed (remediated)
 
 ### D. Additional Resources
 - [OWASP ZAP Documentation](https://www.zaproxy.org/docs/)
