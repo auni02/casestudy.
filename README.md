@@ -342,3 +342,208 @@ Set-Cookie: _csrf-backend=...; Secure; HttpOnly; SameSite=Strict
 |14 | Misconfigured Cache‑Control | Info | 525 | Sensitive pages cached. | Use `no-store, no-cache`. |
 |15 | Session Token in Headers | Info | – | Session identifiers returned. | Confirm secure session management. |
 |16 | User‑Agent Fuzzing Response Diff | Info | – | Responses vary by UA; potential exposure. | Standardize UA handling; monitor. |
+
+## 1. Executive Summary
+
+| Metric                         | Value  |
+|-------------------------------|--------|
+| Total Issues Identified       | 16     |
+| Critical Issues               | 0      |
+| High-Risk Issues              | 0      |
+| Medium-Risk Issues            | 5      |
+| Low-Risk/Informational Issues | 11     |
+| Remediation Status            | Pending |
+
+**Key Takeaway:**  
+The BPN portal is missing several essential security headers and cookie protections. While no critical vulnerabilities were found, the identified weaknesses—especially missing CSP, anti-clickjacking headers, and insecure cookies—may lead to Cross-Site Scripting (XSS), CSRF, and session hijacking risks.
+
+---
+
+## 2. Summary of Findings
+
+| Risk Level | Number of Issues | Example Vulnerability         |
+|------------|------------------|-------------------------------|
+| Critical   | 0                | –                             |
+| High       | 0                | –                             |
+| Medium     | 5                | Missing CSP, Clickjacking     |
+| Low        | 9                | Insecure Cookies, JS Inclusion|
+| Info       | 2                | Server Info Leak, Comments    |
+
+---
+
+## 3. Detailed Findings
+
+### 1. Missing Content Security Policy (CSP)
+
+- **Severity:** Medium  
+- **Description:** CSP header not set. This leaves the site vulnerable to XSS and data injection attacks.  
+- **Affected URL:** https://bpn.iium.edu.my  
+- **Business Impact:** May allow malicious scripts to execute in users’ browsers.  
+- **CWE Reference:** [CWE-693](https://cwe.mitre.org/data/definitions/693.html)  
+- **Recommendation:** Set `Content-Security-Policy: default-src 'self';`  
+- **Prevention Strategy:** Define CSP in all HTTP responses.
+
+---
+
+### 2. Hidden Sensitive File Found
+
+- **Severity:** Medium  
+- **Description:** A sensitive file was discovered as publicly accessible.  
+- **Business Impact:** May expose configuration, credentials, or internal logic.  
+- **CWE Reference:** [CWE-538](https://cwe.mitre.org/data/definitions/538.html)  
+- **Recommendation:** Disable unnecessary files or restrict access via authentication or IP filtering.  
+
+---
+
+### 3. Missing Anti-Clickjacking Header
+
+- **Severity:** Medium  
+- **Description:** No `X-Frame-Options` or CSP `frame-ancestors` directive detected.  
+- **Business Impact:** The page can be embedded in an iframe and used for clickjacking.  
+- **CWE Reference:** [CWE-1021](https://cwe.mitre.org/data/definitions/1021.html)  
+- **Recommendation:** Add `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.
+
+---
+
+### 4. Vulnerable JavaScript Library
+
+- **Severity:** Medium  
+- **Description:** Detected use of an outdated JavaScript library.  
+- **Business Impact:** May expose client-side attack vectors.  
+- **CWE Reference:** [CWE-1395](https://cwe.mitre.org/data/definitions/1395.html)  
+- **Recommendation:** Update or remove the affected JavaScript library.
+
+---
+
+### 5. Big Redirect Detected
+
+- **Severity:** Low  
+- **Description:** Redirect contains content or tokens that may leak sensitive data.  
+- **CWE Reference:** [CWE-201](https://cwe.mitre.org/data/definitions/201.html)  
+- **Recommendation:** Ensure redirect responses do not include sensitive data or long body content.
+
+---
+
+### 6. Cookies Missing Secure Flag
+
+- **Severity:** Low  
+- **Description:** Session cookies set without the `Secure` flag.  
+- **Business Impact:** Risk of interception over unencrypted channels.  
+- **CWE Reference:** [CWE-614](https://cwe.mitre.org/data/definitions/614.html)  
+- **Recommendation:** Add `Secure` flag to all sensitive cookies.
+
+---
+
+### 7. Cookies Missing SameSite Attribute
+
+- **Severity:** Low  
+- **Description:** Cookies lack `SameSite` attribute, exposing them to CSRF attacks.  
+- **CWE Reference:** [CWE-1275](https://cwe.mitre.org/data/definitions/1275.html)  
+- **Recommendation:** Add `SameSite=Lax` or `SameSite=Strict` to cookies.
+
+---
+
+### 8. Cross-Domain JavaScript Inclusion
+
+- **Severity:** Low  
+- **Description:** JavaScript is included from external sources.  
+- **CWE Reference:** [CWE-829](https://cwe.mitre.org/data/definitions/829.html)  
+- **Recommendation:** Allow only scripts from trusted and verified domains.
+
+---
+
+### 9. X-Powered-By Header Disclosure
+
+- **Severity:** Low  
+- **Description:** Server response includes `X-Powered-By` header, revealing tech stack.  
+- **CWE Reference:** [CWE-200](https://cwe.mitre.org/data/definitions/200.html)  
+- **Recommendation:** Remove or mask `X-Powered-By` in HTTP headers.
+
+---
+
+### 10. Server Version Disclosure via HTTP Header
+
+- **Severity:** Low  
+- **Description:** The `Server` header reveals software version.  
+- **CWE Reference:** [CWE-200](https://cwe.mitre.org/data/definitions/200.html)  
+- **Recommendation:** Configure server to suppress or genericize this header.
+
+---
+
+### 11. Strict-Transport-Security Header Not Set
+
+- **Severity:** Low  
+- **Description:** HSTS policy not enforced, increasing downgrade attack risks.  
+- **CWE Reference:** [CWE-319](https://cwe.mitre.org/data/definitions/319.html)  
+- **Recommendation:** Add `Strict-Transport-Security` header to enforce HTTPS.
+
+---
+
+### 12. Missing X-Content-Type-Options Header
+
+- **Severity:** Low  
+- **Description:** Absence of this header may allow MIME-type sniffing.  
+- **CWE Reference:** [CWE-693](https://cwe.mitre.org/data/definitions/693.html)  
+- **Recommendation:** Set `X-Content-Type-Options: nosniff`.
+
+---
+
+### 13. Suspicious HTML/JS Comments
+
+- **Severity:** Info  
+- **Description:** Page contains debug or internal comments.  
+- **CWE Reference:** [CWE-615](https://cwe.mitre.org/data/definitions/615.html)  
+- **Recommendation:** Remove or obfuscate sensitive comments before deployment.
+
+---
+
+### 14. Misconfigured Cache-Control Headers
+
+- **Severity:** Info  
+- **Description:** Insecure resources may be cached by browsers/proxies.  
+- **CWE Reference:** [CWE-525](https://cwe.mitre.org/data/definitions/525.html)  
+- **Recommendation:** Use `Cache-Control: no-store, no-cache, must-revalidate`.
+
+---
+
+### 15. Session Token in HTTP Response Headers
+
+- **Severity:** Info  
+- **Description:** Detected session ID in headers.  
+- **CWE Reference:** [CWE-613](https://cwe.mitre.org/data/definitions/613.html)  
+- **Recommendation:** Ensure tokens are protected and use `HttpOnly`, `Secure`.
+
+---
+
+### 16. User-Agent Fuzzing Behavior
+
+- **Severity:** Info  
+- **Description:** Site behavior changes based on User-Agent input.  
+- **Recommendation:** Normalize responses and avoid leaking special logic via UA detection.
+
+---
+
+## 4. Recommendations & Next Steps
+
+- Immediately configure missing HTTP headers (CSP, HSTS, Anti-Clickjacking).
+- Fix cookie attributes and session handling.
+- Remove sensitive or unnecessary debug information from production.
+- Review and update third-party JavaScript libraries.
+- Conduct regular vulnerability assessments.
+
+### Team Responsibilities
+
+| Action Item                    | Owner              | Deadline    |
+|--------------------------------|--------------------|-------------|
+| Upgrade Bootstrap / JS libs    | Front-end Team     | 2025-07-15  |
+| Implement CSP & X-Frame-Options| DevOps             | 2025-07-31  |
+| Remove hidden file / tighten ACL| Infrastructure     | 2025-07-24  |
+| Cookie & HSTS configuration    | Back-end Team      | 2025-07-28  |
+| Post-fix re-scan               | Security Team      | 2025-08-10  |
+
+
+## Appendix
+
+- Scan engine: OWASP ZAP (passive scan)  
+- List of endpoints tested available on request  
+- Full technical report attached internally
