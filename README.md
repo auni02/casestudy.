@@ -322,6 +322,164 @@ Set-Cookie: _csrf-backend=...; Secure; HttpOnly; SameSite=Strict
 | 6 | HSTS Header Not Set | Low | 319 | SSL‑stripping risk. | Add HSTS header. |
 | 7 | Missing X‑Content‑Type‑Options | Low | 693 | MIME‑sniffing allowed. | Add `X-Content-Type-Options: nosniff`. |
 
+# Web Application Vulnerability Scan Report
+
+**Tool Used:** OWASP ZAP  
+**Date of Scan:** 2025-06-16  
+**Scanned By:** Nur Atiqah Binti Mat Jusoh  
+**Target Application:** https://fas.iium.edu.my  
+**Scan Type:** Passive  
+**Scan Duration:** 09:30 AM – 09:59 AM
+
+---
+
+## 1. Executive Summary
+
+| Metric                         | Value            |
+|-------------------------------|------------------|
+| Total Issues Identified       | 10               |
+| Critical Issues               | 0                |
+| High-Risk Issues              | 0                |
+| Medium-Risk Issues            | 2                |
+| Low-Risk Issues               | 5                |
+| Informational Issues          | 3                |
+| Remediation Status            | Pending          |
+
+**Key Takeaway:**  
+The scan of **https://fas.iium.edu.my** identified **2 medium-risk vulnerabilities** and **5 low-risk vulnerabilities** that require remediation. No critical or high-risk issues were discovered. Applying recommended security headers and cookie protections is necessary to strengthen web application security.
+
+---
+
+## 2. Summary of Findings
+
+| Risk Level | Number of Issues | Example Vulnerability                  |
+|------------|------------------|----------------------------------------|
+| Critical   | 0                | -                                      |
+| High       | 0                | -                                      |
+| Medium     | 2                | Missing Anti-clickjacking Header      |
+| Low        | 5                | Cookie Without Secure Flag            |
+| Info       | 3                | Session Management Response Identified |
+
+---
+
+## 3. Detailed Findings
+
+### 3.1 Content Security Policy (CSP) Header Not Set
+
+- **Severity:** Medium
+- **Description:**  
+  Content Security Policy (CSP) is missing. CSP helps protect against Cross-Site Scripting (XSS) and data injection attacks by specifying trusted content sources.
+
+- **Affected URLs:**  
+  - https://fas.iium.edu.my  
+  - https://fas.iium.edu.my/robots.txt  
+  - https://fas.iium.edu.my/sitemap.xml  
+
+- **Business Impact:**  
+  Without CSP, malicious actors could exploit XSS vulnerabilities, potentially leading to data breaches or hijacking of user sessions.
+
+- **OWASP Reference:**  
+  [OWASP A03 - Injection](https://owasp.org/www-project-top-ten/A03_2021-Injection/)
+
+- **Recommendation:**  
+  Add a `Content-Security-Policy` HTTP header specifying allowed sources for scripts, styles, and other resources.
+
+- **Prevention Strategy:**  
+  - Enforce strong CSP directives.
+  - Regularly test web pages for script injection.
+  - Conduct routine security audits.
+
+> **Responsible Team:** IIUM IT Web Development Team  
+> **Target Remediation Date:** 2025-07-15
+
+---
+
+### 3.2 Missing Anti-clickjacking Header
+
+- **Severity:** Medium
+- **Description:**  
+  Missing anti-clickjacking protection allows attackers to embed the site within an iframe, tricking users into performing unintended actions.
+
+- **Affected URL:**  
+  - https://fas.iium.edu.my  
+
+- **Business Impact:**  
+  Potential exploitation via clickjacking attacks, leading to unauthorized transactions or disclosure of sensitive user actions.
+
+- **OWASP Reference:**  
+  [OWASP A01 - Broken Access Control](https://owasp.org/www-project-top-ten/A01_2021-Broken_Access_Control/)
+
+- **Recommendation:**  
+  Implement either:  
+  - `X-Frame-Options: DENY`  
+  - or `Content-Security-Policy: frame-ancestors 'none'`
+
+- **Prevention Strategy:**  
+  - Apply HTTP headers through web server configuration.
+  - Review page access controls regularly.
+
+> **Responsible Team:** IIUM IT Infrastructure Team  
+> **Target Remediation Date:** 2025-07-15
+
+---
+
+### 3.3 Low-Risk Vulnerabilities
+
+| Vulnerability                                | Instances | Recommendation Summary                                          |
+|----------------------------------------------|-----------|-----------------------------------------------------------------|
+| **Cookie Without Secure Flag**               | 3         | Set `Secure` attribute on cookies to enforce HTTPS-only usage.  |
+| **Cookie Without SameSite Attribute**        | 3         | Add `SameSite=Strict` or `SameSite=Lax` to all cookies.         |
+| **Server Leaks Version Information**         | 3         | Configure server to hide version information from responses.    |
+| **Strict-Transport-Security Header Missing** | 3         | Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`. |
+| **X-Content-Type-Options Header Missing**    | 1         | Include `X-Content-Type-Options: nosniff` in server responses.  |
+
+> **Responsible Team for All Low-Risk Issues:** IIUM Web Security Team  
+> **Target Remediation Date:** 2025-07-30
+
+---
+
+### 3.4 Informational Findings
+
+| Vulnerability                       | Instances | Note                                         |
+|-------------------------------------|-----------|----------------------------------------------|
+| **Modern Web Application**          | 1         | Informational only, indicates dynamic content. |
+| **Re-examine Cache-Control Directives** | 1       | Review cache settings for sensitive data.   |
+| **Session Management Response Identified** | 3     | Detected session identifiers; informational only. |
+
+---
+
+## 4. Recommendations & Next Steps
+
+1. **Remediate Medium-risk vulnerabilities** as a priority.
+2. **Implement missing security headers** (CSP, X-Frame-Options, HSTS, etc.).
+3. **Enforce secure cookie attributes** (`Secure`, `SameSite`) to prevent CSRF and session hijacking.
+4. **Conduct post-remediation testing** to confirm fixes.
+5. **Adopt secure coding guidelines** for future development.
+6. **Schedule vulnerability scans** every quarter or before major releases.
+7. **Consider engaging penetration testers** for deeper assessment.
+
+---
+
+## Appendix
+
+**Scan Configuration:**  
+- Tool: OWASP ZAP 2.16.1  
+- Mode: Passive Scan  
+- Scope: Entire domain of https://fas.iium.edu.my
+
+**Scanned URLs:**  
+- https://fas.iium.edu.my  
+- https://fas.iium.edu.my/robots.txt  
+- https://fas.iium.edu.my/sitemap.xml
+
+---
+
+**Prepared by:**  
+NUR ATIQAH BINTI MAT JUSOH, 2217008
+Email: nratiqahmj@gmail.com 
+Date: 2025-06-15
+
+
 ## 🔐 bpn.iium.edu.my
 
 | No | Vulnerability | Risk | CWE | Issue Summary | Recommended Fix |
