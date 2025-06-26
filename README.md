@@ -689,19 +689,4 @@ The BPN portal is missing several essential security headers and cookie protecti
 - Review and update third-party JavaScript libraries.
 - Conduct regular vulnerability assessments.
 
-### Team Responsibilities
 
-| Action Item                    | Owner              | Deadline    |
-|--------------------------------|--------------------|-------------|
-| Upgrade Bootstrap / JS libs    | Front-end Team     | 2025-07-15  |
-| Implement CSP & X-Frame-Options| DevOps             | 2025-07-31  |
-| Remove hidden file / tighten ACL| Infrastructure     | 2025-07-24  |
-| Cookie & HSTS configuration    | Back-end Team      | 2025-07-28  |
-| Post-fix re-scan               | Security Team      | 2025-08-10  |
-
-
-## Appendix
-
-- Scan engine: OWASP ZAP (passive scan)  
-- List of endpoints tested available on request  
-- Full technical report attached internally
