@@ -384,19 +384,19 @@ The scan of **https://fas.iium.edu.my** identified **2 medium-risk vulnerabiliti
 - **Recommendation:**  
   Add a `Content-Security-Policy` HTTP header specifying allowed sources for scripts, styles, and other resources.
 
-  - ### Option A: **Using Apache `.htaccess` (if hosted on Apache)**
-  - **Navigate to** the Laravel project’s public folder:
+- ### Option A: **Using Apache `.htaccess` (if hosted on Apache)**
+1. **Navigate to** the Laravel project’s public folder:
     /var/www/html/fas/public/.htaccess
-  - **Add this line** at the top of the file:
+2. **Add this line** at the top of the file:
     '''apache
     Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';"
-  - Restart Apache:
+3. Restart Apache:
     sudo systemctl restart httpd
 
-   - ### Option B: **Using Laravel Middleware (Best for long-term control)**
-   - Create Middleware:
+- ### Option B: **Using Laravel Middleware (Best for long-term control)**
+1. Create Middleware:
      php artisan make:middleware CSPHeader
-   - Edit the file app/Http/Middleware/CSPHeader.php:
+2. Edit the file app/Http/Middleware/CSPHeader.php:
    <?php
 
    namespace App\Http\Middleware;
@@ -414,7 +414,7 @@ The scan of **https://fas.iium.edu.my** identified **2 medium-risk vulnerabiliti
       }
    }
 
-  - Register the middleware globally in app/Http/Kernel.php:
+3. Register the middleware globally in app/Http/Kernel.php:
    protected $middleware = [
    //Other middleware...
    \App\Http\Middleware\CSPHeader::class,
