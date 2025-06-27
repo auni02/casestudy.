@@ -383,6 +383,60 @@ The scan of **https://fas.iium.edu.my** identified **2 medium-risk vulnerabiliti
 
 - **Recommendation:**  
   Add a `Content-Security-Policy` HTTP header specifying allowed sources for scripts, styles, and other resources.
+  
+  ### Option A: **Using Apache `.htaccess` (if hosted on Apache)**
+1. **Navigate to** the Laravel project’s public folder:
+   /var/www/html/fas/public/.htaccess
+2. **Add this line** at the top of the file:
+   '''apache
+   Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';"
+3. Restart Apache:
+   sudo systemctl restart httpd
+
+   ### Option B: **Using Laravel Middleware (Best for long-term control)**
+1. Create Middleware:
+   php artisan make:middleware CSPHeader
+2. Edit the file app/Http/Middleware/CSPHeader.php:
+   <?php
+
+   namespace App\Http\Middleware;
+
+   use Closure;
+   use Illuminate\Http\Request;
+
+   class CSPHeader
+   {
+      public function handle(Request $request, Closure $next)
+      {
+          $response = $next($request);
+          $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';");
+          return $response;
+      }
+   }
+
+3. Register the middleware globally in app/Http/Kernel.php:
+   protected $middleware = [
+   //Other middleware...
+   \App\Http\Middleware\CSPHeader::class,
+   ];
+
+- **Explanation of CSP Directives Used**
+| Directive                          | Description                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| `default-src 'self'`               | Allow all content (scripts, styles, etc.) only from the same origin      |
+| `script-src 'self'`                | JavaScript only from the same origin                                     |
+| `style-src 'self' 'unsafe-inline'` | Inline styles allowed (due to Laravel blade templates); from same origin |
+| `img-src 'self' data:`             | Allow images from same origin and inline base64 (e.g. for logos/icons)   |
+| `font-src 'self'`                  | Allow fonts from the same origin                                         |
+| `frame-ancestors 'none'`           | Disallow all framing to prevent clickjacking                             |
+
+- **Files to Edit**
+| File                                         | Purpose                                   |
+| -------------------------------------------- | ----------------------------------------- |
+| `public/.htaccess`                           | Apply header via Apache (quick fix)       |
+| `app/Http/Middleware/CSPHeader.php`          | Laravel-based CSP header handling         |
+| `app/Http/Kernel.php`                        | Register the CSP middleware               |
+| `config/security.php` (optional config file) | Centralize CSP if making modular settings |
 
 - **Prevention Strategy:**  
   - Enforce strong CSP directives.
