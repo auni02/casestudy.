@@ -310,7 +310,7 @@ Set-Cookie: _csrf-backend=...; Secure; HttpOnly; SameSite=Strict
 - [Security Headers Guide](https://securityheaders.com/)
 
   
-## 🔐 fas.iium.edu.my
+## fas.iium.edu.my
 
 | No | Vulnerability | Risk | CWE | Issue Summary | Recommended Fix |
 |----|---------------|------|-----|---------------|-----------------|
@@ -381,22 +381,36 @@ The scan of **https://fas.iium.edu.my** identified **2 medium-risk vulnerabiliti
 - **OWASP Reference:**  
   [OWASP A03 - Injection](https://owasp.org/www-project-top-ten/A03_2021-Injection/)
 
-- **Recommendation:**  
-  Add a `Content-Security-Policy` HTTP header specifying allowed sources for scripts, styles, and other resources.
+## Recommendation (CSP Header)
 
-- ### Option A: **Using Apache `.htaccess` (if hosted on Apache)**
-1. **Navigate to** the Laravel project’s public folder:
-    /var/www/html/fas/public/.htaccess
-2. **Add this line** at the top of the file:
-    '''apache
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';"
+### 🛠️ Option A: Using Apache `.htaccess`
+
+1. Navigate to:
+   ```
+   /var/www/html/fas/public/.htaccess
+   ```
+
+2. Add this line at the top:
+   ```apache
+   Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';"
+   ```
+
 3. Restart Apache:
-    sudo systemctl restart httpd
+   ```bash
+   sudo systemctl restart httpd
+   ```
 
-- ### Option B: **Using Laravel Middleware (Best for long-term control)**
-1. Create Middleware:
-     php artisan make:middleware CSPHeader
-2. Edit the file app/Http/Middleware/CSPHeader.php:
+---
+
+### Option B: Using Laravel Middleware
+
+1. Create middleware:
+   ```bash
+   php artisan make:middleware CSPHeader
+   ```
+
+2. Add logic in `app/Http/Middleware/CSPHeader.php`:
+   ```php
    <?php
 
    namespace App\Http\Middleware;
@@ -406,41 +420,45 @@ The scan of **https://fas.iium.edu.my** identified **2 medium-risk vulnerabiliti
 
    class CSPHeader
    {
-      public function handle(Request $request, Closure $next)
-      {
-          $response = $next($request);
-          $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';");
-          return $response;
-      }
+       public function handle(Request $request, Closure $next)
+       {
+           $response = $next($request);
+           $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';");
+           return $response;
+       }
    }
+   ```
 
-3. Register the middleware globally in app/Http/Kernel.php:
+3. Register in `app/Http/Kernel.php`:
+   ```php
    protected $middleware = [
-   //Other middleware...
-   \App\Http\Middleware\CSPHeader::class,
+       // Other middleware...
+       \App\Http\Middleware\CSPHeader::class,
    ];
-
-### 📖 Explanation of CSP Directives Used
-
-| Directive                          | Description                                                              |
-|-----------------------------------|--------------------------------------------------------------------------|
-| `default-src 'self'`              | Allows all content (scripts, styles, images, fonts) only from the same origin |
-| `script-src 'self'`               | JavaScript must come from the same origin                               |
-| `style-src 'self' 'unsafe-inline'`| Allows inline styles (needed by Laravel Blade) and styles from same origin |
-| `img-src 'self' data:`            | Allows images from same origin and inline base64 images (e.g. logos)     |
-| `font-src 'self'`                 | Allows fonts only from the same origin                                   |
-| `frame-ancestors 'none'`          | Prevents the site from being embedded in an iframe (blocks clickjacking) |
+   ```
 
 ---
 
-### 🛠️ Files to Edit
+### 📖 Explanation of CSP Directives
+
+| Directive                          | Description                                                              |
+|-----------------------------------|--------------------------------------------------------------------------|
+| `default-src 'self'`              | Allows all content from same origin                                      |
+| `script-src 'self'`               | Restricts JavaScript to same origin                                      |
+| `style-src 'self' 'unsafe-inline'`| Allows inline styles for Laravel blade + same origin styles              |
+| `img-src 'self' data:`            | Allows images from same origin + base64 (e.g., icons)                    |
+| `font-src 'self'`                 | Restricts font loading to same origin                                    |
+| `frame-ancestors 'none'`          | Prevents the site from being embedded (protects against clickjacking)   |
+
+---
+
+### Files to Edit
 
 | File                                         | Purpose                                      |
 |---------------------------------------------|----------------------------------------------|
-| `public/.htaccess`                          | Apply CSP header via Apache (quick patch)    |
-| `app/Http/Middleware/CSPHeader.php`         | Laravel middleware to inject CSP headers     |
-| `app/Http/Kernel.php`                       | Registers CSP middleware globally            |
-| `config/security.php` *(optional)*          | For centralizing CSP if modularized later    |
+| `public/.htaccess`                          | Apply CSP header via Apache                  |
+| `app/Http/Middleware/CSPHeader.php`         | Laravel middleware to inject CSP header      |
+| `app/Http/Kernel.php`                       | Register middleware globally                 |
 
 - **Prevention Strategy:**  
   - Enforce strong CSP directives.
@@ -467,10 +485,74 @@ The scan of **https://fas.iium.edu.my** identified **2 medium-risk vulnerabiliti
 - **OWASP Reference:**  
   [OWASP A01 - Broken Access Control](https://owasp.org/www-project-top-ten/A01_2021-Broken_Access_Control/)
 
-- **Recommendation:**  
-  Implement either:  
-  - `X-Frame-Options: DENY`  
-  - or `Content-Security-Policy: frame-ancestors 'none'`
+## Recommendation (Clickjacking Protection)
+
+### Option A: Using Apache `.htaccess`
+
+1. Navigate to:
+   ```
+   /var/www/html/fas/public/.htaccess
+   ```
+
+2. Add the following lines:
+   ```apache
+   Header always set X-Frame-Options "DENY"
+   Header always set Content-Security-Policy "frame-ancestors 'none';"
+   ```
+
+3. Restart Apache:
+   ```bash
+   sudo systemctl restart httpd
+   ```
+
+---
+
+### Option B: Using Laravel Middleware
+
+1. Create middleware:
+   ```bash
+   php artisan make:middleware ClickjackingProtection
+   ```
+
+2. Add logic in `app/Http/Middleware/ClickjackingProtection.php`:
+   ```php
+   <?php
+
+   namespace App\Http\Middleware;
+
+   use Closure;
+   use Illuminate\Http\Request;
+
+   class ClickjackingProtection
+   {
+       public function handle(Request $request, Closure $next)
+       {
+           $response = $next($request);
+           $response->headers->set('X-Frame-Options', 'DENY');
+           $response->headers->set('Content-Security-Policy', "frame-ancestors 'none';");
+           return $response;
+       }
+   }
+   ```
+
+3. Register in `app/Http/Kernel.php`:
+   ```php
+   protected $middleware = [
+       // Other middleware...
+       \App\Http\Middleware\ClickjackingProtection::class,
+   ];
+   ```
+
+---
+
+### Files to Edit
+
+| File                                               | Purpose                                        |
+|----------------------------------------------------|------------------------------------------------|
+| `public/.htaccess`                                | Apache header implementation                   |
+| `app/Http/Middleware/ClickjackingProtection.php`  | Laravel middleware for anti-clickjacking       |
+| `app/Http/Kernel.php`                             | Middleware registration                        |
+
 
 - **Prevention Strategy:**  
   - Apply HTTP headers through web server configuration.
