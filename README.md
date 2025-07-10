@@ -296,9 +296,9 @@ Test HTTPS fully before enabling – mistakes can break access.
 | VLN-17 | Info       | Suspicious Comments in Code                  | 5        | JavaScript files                  | Reviewed|
 
 **Legend:**
-- 🔴 Open (needs remediation)
-- 🟡 Reviewed (requires monitoring)
-- 🟢 Closed (remediated)
+- Open (needs remediation)
+- Reviewed (requires monitoring)
+- Closed (remediated)
 
 ### D. Additional Resources
 - [OWASP ZAP Documentation](https://www.zaproxy.org/docs/)
