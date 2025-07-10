@@ -87,148 +87,144 @@ Addressing these findings will help strengthen the overall **security posture** 
 - **No Critical or High-Risk Issues:**
   - No immediate exploitation vectors such as **Remote Code Execution (RCE)** or **SQL Injection (SQLi)** were identified.
 
-## 3. Detailed Findings
+## 3. Detailed Findings (Actionable Fixes for Medium & Critical Low Issues)
+
+### 🔧 1. Missing Content Security Policy (CSP)  
+**Where to Fix:**  
+- **Apache Server:** Edit `.htaccess` file in the website root folder  
+  (Location: `/var/www/vendor.iium.edu/public_html/.htaccess`)  
+  **Add this line:**  
+  ```apache
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self'"
+  ```
+- **Nginx Server:** Edit the site config file (`/etc/nginx/sites-available/vendor.iium.edu.my`)  
+  **Add inside `server { }` block:**  
+  ```nginx
+  add_header Content-Security-Policy "default-src 'self'; script-src 'self'";
+  ```
+
+**Tools Needed:**  
+- Text editor (VS Code, Nano)  
+- Server access (SSH for Apache/Nginx)  
+
+**Validation:**  
+After saving, check headers at: https://securityheaders.com/
 
 ---
 
-### 1. Missing Content Security Policy (CSP) Header  
-**Severity:** Medium  
+###  2. Anti-Clickjacking (Missing X-Frame-Options)  
+**Where to Fix:**  
+Same files as CSP above:  
+- **Apache (.htaccess):**  
+  ```apache
+  Header set X-Frame-Options "DENY"
+  ```
+- **Nginx (config file):**  
+  ```nginx
+  add_header X-Frame-Options "DENY";
+  ```
 
-**Description:**  
-The application does not implement a Content Security Policy, leaving it vulnerable to Cross-Site Scripting (XSS) and data injection attacks.
-
-**Affected URLs:**
-- https://vendor.iium.edu.my/sitemap.xml  
-- https://vendor.iium.edu.my/
-
-**Business Impact:**  
-Attackers could inject malicious scripts to steal user data or deface the website.
-
-**OWASP Reference:**  
-[OWASP A05:2021 - Security Misconfiguration](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/)
-
-**Recommendation:**  
-Add a CSP header like:  
-Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'
-
-**Prevention Strategy:**
-- Implement CSP in server configurations.
-- Regularly audit headers using security tools.
-
-**Responsible Team:** DevOps  
-**Target Remediation Date:** 2025-07-31
+**Quick Test:**  
+Try embedding your page in an iframe – it should now block loading.
 
 ---
 
-### 2. Vulnerable JavaScript Library (Bootstrap 3.4.1)  
-**Severity:** Medium  
+### 3. Outdated Bootstrap Library  
+**Steps to Fix:**  
+1. **Download latest Bootstrap** from: https://getbootstrap.com/docs/5.3/getting-started/download/  
+2. **Replace old file:**  
+   - Current path: `/assets/b635246e/js/bootstrap.js`  
+   - Upload new files to same folder  
+3. **Update HTML references:**  
+   Change:  
+   ```html
+   <script src="/assets/b635246e/js/bootstrap.js"></script>
+   ```
+   To:  
+   ```html
+   <script src="/assets/js/bootstrap.bundle.min.js"></script> 
+   ```
 
-**Description:**  
-An outdated Bootstrap version (3.4.1) with known vulnerabilities (CVE-2024-6484) is in use.
-
-**Affected URL:**
-- https://vendor.iium.edu.my/assets/b635246e/js/bootstrap.js
-
-**Business Impact:**  
-Exploitable vulnerabilities could compromise user sessions or lead to DOM-based attacks.
-
-**OWASP Reference:**  
-[OWASP A06:2021 - Vulnerable Components](https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/)
-
-**Recommendation:**  
-Upgrade to **Bootstrap 5.x** or later.
-
-**Prevention Strategy:**
-- Establish a patch management process.
-- Use dependency scanners (e.g., OWASP Dependency Check).
-
-**Responsible Team:** Frontend Development  
-**Target Remediation Date:** 2025-07-15
+**Tools Needed:**  
+- FTP/SFTP access (FileZilla, WinSCP)  
+- Code editor  
 
 ---
 
-### 3. Missing Anti-Clickjacking Header  
-**Severity:** Medium  
+### 4. Cookie Security Flags (Secure/SameSite)  
+**Where to Fix (PHP Example):**  
+Edit the PHP script that sets cookies (likely in login scripts):  
+```php
+setcookie(
+    '_csrf-backend', 
+    $token, 
+    [
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Strict'
+    ]
+);
+```
 
-**Description:**  
-Missing `X-Frame-Options` or `CSP frame-ancestors` directive exposes the site to clickjacking.
+**Location Examples:**  
+- `/adm/site/login.php`  
+- `/includes/auth_functions.php`  
 
-**Affected URL:**
-- https://vendor.iium.edu.my/
-
-**Business Impact:**  
-Attackers could embed the site in iframes to trick users into unintended actions.
-
-**OWASP Reference:**  
-[OWASP A05:2021 - Security Misconfiguration](https://owasp.org/Top10/A05_2021-Security_Misconfiguration/)
-
-**Recommendation:**  
-Add the following header:  X-Frame-Options: DENY 
-
-
-**Prevention Strategy:**
-- Include headers in all responses.
-- Test with tools like ZAP or Burp Suite.
-
-**Responsible Team:** DevOps  
-**Target Remediation Date:** 2025-07-31
+**Check After Fix:**  
+Use Chrome DevTools → Application → Cookies to verify flags.
 
 ---
 
-### 4. Server Version Information Leak  
-**Severity:** Low  
+### 5. Hide Server Version (Apache)  
+**Edit Apache Config:**  
+1. Open `/etc/httpd/conf/httpd.conf`  
+2. Add these lines:  
+   ```apache
+   ServerTokens Prod
+   ServerSignature Off
+   ```
+3. Restart Apache:  
+   ```bash
+   sudo systemctl restart httpd
+   ```
 
-**Description:**  
-Server headers expose `Apache/2.4.6 (CentOS)` and `PHP/7.4.27`, revealing outdated software versions.
-
-**Affected URLs:**  
-All endpoints (e.g., `/robots.txt`, `/adm/site/login`)
-
-**Business Impact:**  
-Attackers can target known vulnerabilities in these versions.
-
-**OWASP Reference:**  
-[OWASP A01:2021 - Information Exposure](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
-
-**Recommendation:**  
-Suppress headers in Apache config:
-ServerTokens Prod
-ServerSignature Off
-
-
-**Prevention Strategy:**
-- Regular server hardening audits.
-
-**Responsible Team:** Infrastructure  
-**Target Remediation Date:** 2025-08-15
+**For PHP Version:**  
+Edit `php.ini` (usually `/etc/php.ini`):  
+```ini
+expose_php = Off
+```
 
 ---
 
-### 5. Missing Secure/SameSite Cookie Attributes  
-**Severity:** Low  
+### 6. Enable HSTS  
+**Add to .htaccess (Apache):**  
+```apache
+Header set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+```
 
-**Description:**  
-Cookies like `_csrf-backend` lack `Secure` and `SameSite` attributes.
+**For Nginx:**  
+```nginx
+add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
+```
 
-**Affected URLs:**  
-Login/session-related endpoints.
+**Warning:**  
+Test HTTPS fully before enabling – mistakes can break access.
 
-**Business Impact:**  
-Increased risk of CSRF attacks or cookie theft over HTTP.
+---
 
-**OWASP Reference:**  
-[OWASP A01:2021 - Broken Access Control](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
+### Required Software/Tools List  
+| Task | Tool | Download Link |
+|------|------|---------------|
+| Edit server config | VS Code / Nano | https://code.visualstudio.com/ |
+| File transfer | WinSCP / FileZilla | https://winscp.net/ |
+| Header validation | SecurityHeaders.com | https://securityheaders.com/ |
+| Bootstrap update | Official Site | https://getbootstrap.com/ |
+| Server restart | SSH Client (PuTTY) | https://www.putty.org/ |
 
-**Recommendation:**  
-Update cookies:
-Set-Cookie: _csrf-backend=...; Secure; HttpOnly; SameSite=Strict
-
-
-**Prevention Strategy:**
-- Conduct code reviews for cookie settings.
-
-**Responsible Team:** Backend Development  
-**Target Remediation Date:** 2025-08-01
+**Notes:**  
+- Always **backup files** before editing (e.g., `cp httpd.conf httpd.conf.bak`)  
+- Changes may require **server restart** to take effect  
+- Test in **staging environment** first if available  
 
 ## 4. Recommendations & Next Steps
 
