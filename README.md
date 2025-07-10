@@ -9,7 +9,7 @@
 | Syazwani binti Rozali      | 2217642      |  http://vendor.iium.edu.my    |
 | Nur Atiqah Binti Mat Jusoh      | 2217008      |  https://fas.iium.edu.my   |
 
-## 🔐 vendor.iium.edu.my
+##  vendor.iium.edu.my
 
 | No | Vulnerability | Risk | CWE | Issue Summary | Recommended Fix |
 |----|---------------|------|-----|---------------|-----------------|
@@ -43,7 +43,7 @@
 | Informational Issues       | 7         |
 | Remediation Status         | Pending   |
 
-### 🔑 Key Takeaway
+###  Key Takeaway
 
 The security assessment identified **3 medium-risk vulnerabilities**, including:
 
@@ -78,7 +78,7 @@ Addressing these findings will help strengthen the overall **security posture** 
 |                |                      | 2. Big Redirect with Potential Info Leak  
 |                |                      | 3. Server Banner Exposure |
 
-### 🧐 Key Observations
+### Key Observations
 
 - **Top Risks:**
   - **Medium:** Missing security headers (e.g., CSP, X-Frame-Options) and usage of an outdated library (Bootstrap 3.4.1).
@@ -89,7 +89,7 @@ Addressing these findings will help strengthen the overall **security posture** 
 
 ## 3. Detailed Findings (Actionable Fixes for Medium & Critical Low Issues)
 
-### 🔧 1. Missing Content Security Policy (CSP)  
+### 1. Missing Content Security Policy (CSP)  
 **Where to Fix:**  
 - **Apache Server:** Edit `.htaccess` file in the website root folder  
   (Location: `/var/www/vendor.iium.edu/public_html/.htaccess`)  
@@ -112,7 +112,7 @@ After saving, check headers at: https://securityheaders.com/
 
 ---
 
-###  2. Anti-Clickjacking (Missing X-Frame-Options)  
+### 2. Anti-Clickjacking (Missing X-Frame-Options)  
 **Where to Fix:**  
 Same files as CSP above:  
 - **Apache (.htaccess):**  
