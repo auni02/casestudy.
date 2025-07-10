@@ -619,214 +619,174 @@ NUR ATIQAH BINTI MAT JUSOH, 2217008
 Email: nratiqahmj@gmail.com 
 Date: 2025-06-15
 
+# 🔐 Web Application Vulnerability Scan Report
 
-## 🔐 bpn.iium.edu.my
-
-| No | Vulnerability | Risk | CWE | Issue Summary | Recommended Fix |
-|----|---------------|------|-----|---------------|-----------------|
-| 1 | Missing CSP Header | Medium | 693 | No CSP → XSS/injection risk. | Set `Content-Security-Policy`. |
-| 2 | Hidden Sensitive File | Medium | 538 | Exposed file leaks credentials/config. | Remove or protect file (authN/Z, IP allow‑list). |
-| 3 | Missing Anti‑Clickjacking Header | Medium | 1021 | No protection against framing. | Add `X-Frame-Options` or `frame-ancestors`. |
-| 4 | Vulnerable JS Library | Medium | 1395 | Outdated third‑party JS. | Upgrade to latest library. |
-| 5 | Big Redirect With Body | Low | 201 | Redirect may leak sensitive data. | Remove body or sensitive info. |
-| 6 | Cookie Missing Secure Flag | Low | 614 | Session cookies over HTTP. | Add `Secure` flag. |
-| 7 | Cookie Missing SameSite | Low | 1275 | CSRF risk. | Add `SameSite=Lax/Strict`. |
-| 8 | Cross‑Domain JS Inclusion | Low | 829 | Third‑party scripts loaded. | Restrict to trusted domains. |
-| 9 | X‑Powered‑By Header Leak | Low | 497 | Tech stack disclosed. | Remove header. |
-|10 | Server Version Leak | Low | 497 | `Server` header reveals version. | Suppress or generic server header. |
-|11 | HSTS Not Enabled | Low | 319 | HTTP downgrade possible. | Add HSTS header. |
-|12 | Missing X‑Content‑Type‑Options | Low | 693 | MIME‑sniffing allowed. | Add `nosniff` header. |
-|13 | Suspicious Code Comments | Info | 615 | Comments may reveal internals. | Strip production comments. |
-|14 | Misconfigured Cache‑Control | Info | 525 | Sensitive pages cached. | Use `no-store, no-cache`. |
-|15 | Session Token in Headers | Info | – | Session identifiers returned. | Confirm secure session management. |
-|16 | User‑Agent Fuzzing Response Diff | Info | – | Responses vary by UA; potential exposure. | Standardize UA handling; monitor. |
-
-## 1. Executive Summary
-
-| Metric                         | Value  |
-|-------------------------------|--------|
-| Total Issues Identified       | 16     |
-| Critical Issues               | 0      |
-| High-Risk Issues              | 0      |
-| Medium-Risk Issues            | 5      |
-| Low-Risk/Informational Issues | 11     |
-| Remediation Status            | Pending |
-
-**Key Takeaway:**  
-The BPN portal is missing several essential security headers and cookie protections. While no critical vulnerabilities were found, the identified weaknesses—especially missing CSP, anti-clickjacking headers, and insecure cookies—may lead to Cross-Site Scripting (XSS), CSRF, and session hijacking risks.
+**Target Application:** https://bpn.iium.edu.my  
+**Tool Used:** OWASP ZAP 2.16.1  
+**Date of Scan:** 2025-06-16  
+**Scanned By:** Nur Atiqah Binti Mat Jusoh  
+**Scan Type:** Passive Scan  
+**Scan Duration:** 10:15 AM – 10:44 AM  
 
 ---
 
-## 2. Summary of Findings
+## 📋 1. Executive Summary
+
+| Metric                  | Value |
+|------------------------|-------|
+| Total Issues Identified| 16    |
+| Critical Issues        | 0     |
+| High-Risk Issues       | 0     |
+| Medium-Risk Issues     | 5     |
+| Low-Risk Issues        | 7     |
+| Informational Issues   | 4     |
+| Remediation Status     | Pending |
+
+> 🟡 **Key Takeaway:**  
+The BPN IIUM portal has **5 medium-risk vulnerabilities**, mainly due to **missing security headers** and **outdated libraries**. These should be addressed promptly to prevent Cross-Site Scripting (XSS), clickjacking, CSRF, or potential data leakage.
+
+---
+
+## 📊 2. Summary of Findings
 
 | Risk Level | Number of Issues | Example Vulnerability         |
 |------------|------------------|-------------------------------|
-| Critical   | 0                | –                             |
-| High       | 0                | –                             |
-| Medium     | 5                | Missing CSP, Clickjacking     |
-| Low        | 9                | Insecure Cookies, JS Inclusion|
-| Info       | 2                | Server Info Leak, Comments    |
+| Medium     | 5                | Missing CSP, Sensitive File Leak |
+| Low        | 7                | Cookie Flags, Server Info Leak |
+| Info       | 4                | Debug Comments, UA Detection  |
 
 ---
 
-## 3. Detailed Findings
+## 🧯 3. Detailed Findings
 
-### 1. Missing Content Security Policy (CSP)
-
+### 3.1 🔧 Missing Content Security Policy (CSP)
 - **Severity:** Medium  
-- **Description:** CSP header not set. This leaves the site vulnerable to XSS and data injection attacks.  
+- **Description:** No `Content-Security-Policy (CSP)` header was set. This weakens protection against XSS and content injection.  
 - **Affected URL:** https://bpn.iium.edu.my  
-- **Business Impact:** May allow malicious scripts to execute in users’ browsers.  
-- **CWE Reference:** [CWE-693](https://cwe.mitre.org/data/definitions/693.html)  
-- **Recommendation:** Set `Content-Security-Policy: default-src 'self';`  
-- **Prevention Strategy:** Define CSP in all HTTP responses.
+
+**💼 Business Impact:**  
+Attackers could inject malicious scripts that steal user data or alter website content.
+
+**🛠️ Recommendation:**  
+Set CSP header to allow only trusted sources:
+
+**Option A – Apache:**
+```apache
+Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none';"
+
+**Option B – Laravel Middleware:**
+Create middleware CSPHeader and inject the CSP header as shown in the FAS report.
+
+3.2 📁 Exposed Sensitive File
+Severity: Medium
+
+Description: A sensitive file (e.g., .env, .git, backup zip) was found accessible to the public.
+
+💼 Business Impact:
+Could leak database credentials, API keys, or internal logic.
+
+## 4.🛠️ Recommendation:
+
+Immediately remove the file or restrict access using:
+
+IP whitelisting
+
+Authentication
+
+.htaccess or Nginx config
+
+## 3.3 ❌ Missing Anti-Clickjacking Protection
+Severity: Medium
+
+Description: The application lacks the X-Frame-Options or Content-Security-Policy: frame-ancestors headers.
+💼 Business Impact:
+Hackers can embed the site in a hidden iframe to trick users into clicking malicious elements (clickjacking).
+
+🛠️ Recommendation:
+Option A – Apache:
+
+apache
+Copy
+Edit
+Header always set X-Frame-Options "DENY"
+Header always set Content-Security-Policy "frame-ancestors 'none';"
+Option B – Laravel Middleware:
+Create a ClickjackingProtection middleware as shown in the FAS report.
+
+## 3.4 📦 Vulnerable JavaScript Library
+Severity: Medium
+Description: An outdated third-party JS library is in use.
+
+💼 Business Impact:
+Legacy JS libraries may contain known vulnerabilities that attackers can exploit (e.g., DOM-based XSS).
+
+🛠️ Recommendation:
+-Identify the outdated JS version (e.g., jQuery, Bootstrap).
+-Upgrade to the latest secure version.
+-Use npm audit or OWASP Dependency-Check for future alerts.
+
+## 3.5 🚨 Cookie Issues (Secure & SameSite Missing)
+Severity: Low
+Description: Some cookies do not include Secure or SameSite attributes.
+
+💼 Business Impact:
+Cookies without these flags may be transmitted over HTTP or shared across domains — increasing CSRF/session hijack risk.
+
+🛠️ Recommendation:
+Update cookies like this:
+-http
+-Copy
+-Edit
+-Set-Cookie: session_id=abc123; Secure; HttpOnly; SameSite=Strict
+
+## 🧱 4. Additional Issues
+
+| Vulnerability                       | Severity | Fix Summary                                                  |
+|------------------------------------|----------|--------------------------------------------------------------|
+| Server Version Leak (Server header)| Low      | Mask/suppress version info (e.g., `ServerTokens Prod`)       |
+| X-Powered-By Header Disclosure     | Low      | Remove `X-Powered-By` header via PHP or server config        |
+| Missing HSTS Header                | Low      | Add `Strict-Transport-Security: max-age=31536000;`           |
+| MIME Sniffing Allowed              | Low      | Add `X-Content-Type-Options: nosniff`                        |
+| Cross-Domain JS Inclusion          | Low      | Restrict `<script src="">` to trusted domains                |
+| Big Redirect with Body             | Low      | Avoid exposing data in redirects                             |
+| Suspicious JS/HTML Comments        | Info     | Remove debug/internal comments before production             |
+| Session Token in Response Header   | Info     | Ensure tokens are not exposed; use `Secure`/`HttpOnly` flags |
+| User-Agent Behavior Variation      | Info     | Normalize or monitor for suspicious UA changes               |
+| Cache-Control Misconfigured        | Info     | Use `Cache-Control: no-store, no-cache, must-revalidate`     |
 
 ---
 
-### 2. Hidden Sensitive File Found
+## ✅ 5. Next Steps & Action Plan
 
-- **Severity:** Medium  
-- **Description:** A sensitive file was discovered as publicly accessible.  
-- **Business Impact:** May expose configuration, credentials, or internal logic.  
-- **CWE Reference:** [CWE-538](https://cwe.mitre.org/data/definitions/538.html)  
-- **Recommendation:** Disable unnecessary files or restrict access via authentication or IP filtering.  
+| Task                                 | Owner               | Deadline     |
+|--------------------------------------|----------------------|--------------|
+| Implement CSP & Anti-Clickjacking    | DevOps Team          | 2025-07-20   |
+| Remove exposed sensitive files       | Backend/Infra Team   | 2025-07-20   |
+| Upgrade vulnerable JS libraries      | Frontend Team        | 2025-07-22   |
+| Fix cookie flags                     | Backend Team         | 2025-07-30   |
+| Re-scan website to validate fixes    | Security Team        | 2025-08-05   |
 
----
 
-### 3. Missing Anti-Clickjacking Header
+## 🔐 6. Prevention Strategy
+Short-Term:
+-Add missing headers via Laravel or server config
+-Restrict access to sensitive files
+-Review and upgrade third-party JS libraries
 
-- **Severity:** Medium  
-- **Description:** No `X-Frame-Options` or CSP `frame-ancestors` directive detected.  
-- **Business Impact:** The page can be embedded in an iframe and used for clickjacking.  
-- **CWE Reference:** [CWE-1021](https://cwe.mitre.org/data/definitions/1021.html)  
-- **Recommendation:** Add `X-Frame-Options: DENY` or `Content-Security-Policy: frame-ancestors 'none'`.
+Long-Term:
+=Perform vulnerability scans quarterly
+-Follow OWASP Secure Coding Practices
+-Add security checks in CI/CD pipelines
+-Conduct annual penetration tests
 
----
+📎 Appendix
+Scan Scope: https://bpn.iium.edu.my
+Scan Type: Passive Scan (No authentication)
+Tool: OWASP ZAP v2.16.1
 
-### 4. Vulnerable JavaScript Library
-
-- **Severity:** Medium  
-- **Description:** Detected use of an outdated JavaScript library.  
-- **Business Impact:** May expose client-side attack vectors.  
-- **CWE Reference:** [CWE-1395](https://cwe.mitre.org/data/definitions/1395.html)  
-- **Recommendation:** Update or remove the affected JavaScript library.
-
----
-
-### 5. Big Redirect Detected
-
-- **Severity:** Low  
-- **Description:** Redirect contains content or tokens that may leak sensitive data.  
-- **CWE Reference:** [CWE-201](https://cwe.mitre.org/data/definitions/201.html)  
-- **Recommendation:** Ensure redirect responses do not include sensitive data or long body content.
-
----
-
-### 6. Cookies Missing Secure Flag
-
-- **Severity:** Low  
-- **Description:** Session cookies set without the `Secure` flag.  
-- **Business Impact:** Risk of interception over unencrypted channels.  
-- **CWE Reference:** [CWE-614](https://cwe.mitre.org/data/definitions/614.html)  
-- **Recommendation:** Add `Secure` flag to all sensitive cookies.
-
----
-
-### 7. Cookies Missing SameSite Attribute
-
-- **Severity:** Low  
-- **Description:** Cookies lack `SameSite` attribute, exposing them to CSRF attacks.  
-- **CWE Reference:** [CWE-1275](https://cwe.mitre.org/data/definitions/1275.html)  
-- **Recommendation:** Add `SameSite=Lax` or `SameSite=Strict` to cookies.
-
----
-
-### 8. Cross-Domain JavaScript Inclusion
-
-- **Severity:** Low  
-- **Description:** JavaScript is included from external sources.  
-- **CWE Reference:** [CWE-829](https://cwe.mitre.org/data/definitions/829.html)  
-- **Recommendation:** Allow only scripts from trusted and verified domains.
-
----
-
-### 9. X-Powered-By Header Disclosure
-
-- **Severity:** Low  
-- **Description:** Server response includes `X-Powered-By` header, revealing tech stack.  
-- **CWE Reference:** [CWE-200](https://cwe.mitre.org/data/definitions/200.html)  
-- **Recommendation:** Remove or mask `X-Powered-By` in HTTP headers.
-
----
-
-### 10. Server Version Disclosure via HTTP Header
-
-- **Severity:** Low  
-- **Description:** The `Server` header reveals software version.  
-- **CWE Reference:** [CWE-200](https://cwe.mitre.org/data/definitions/200.html)  
-- **Recommendation:** Configure server to suppress or genericize this header.
-
----
-
-### 11. Strict-Transport-Security Header Not Set
-
-- **Severity:** Low  
-- **Description:** HSTS policy not enforced, increasing downgrade attack risks.  
-- **CWE Reference:** [CWE-319](https://cwe.mitre.org/data/definitions/319.html)  
-- **Recommendation:** Add `Strict-Transport-Security` header to enforce HTTPS.
-
----
-
-### 12. Missing X-Content-Type-Options Header
-
-- **Severity:** Low  
-- **Description:** Absence of this header may allow MIME-type sniffing.  
-- **CWE Reference:** [CWE-693](https://cwe.mitre.org/data/definitions/693.html)  
-- **Recommendation:** Set `X-Content-Type-Options: nosniff`.
-
----
-
-### 13. Suspicious HTML/JS Comments
-
-- **Severity:** Info  
-- **Description:** Page contains debug or internal comments.  
-- **CWE Reference:** [CWE-615](https://cwe.mitre.org/data/definitions/615.html)  
-- **Recommendation:** Remove or obfuscate sensitive comments before deployment.
-
----
-
-### 14. Misconfigured Cache-Control Headers
-
-- **Severity:** Info  
-- **Description:** Insecure resources may be cached by browsers/proxies.  
-- **CWE Reference:** [CWE-525](https://cwe.mitre.org/data/definitions/525.html)  
-- **Recommendation:** Use `Cache-Control: no-store, no-cache, must-revalidate`.
-
----
-
-### 15. Session Token in HTTP Response Headers
-
-- **Severity:** Info  
-- **Description:** Detected session ID in headers.  
-- **CWE Reference:** [CWE-613](https://cwe.mitre.org/data/definitions/613.html)  
-- **Recommendation:** Ensure tokens are protected and use `HttpOnly`, `Secure`.
-
----
-
-### 16. User-Agent Fuzzing Behavior
-
-- **Severity:** Info  
-- **Description:** Site behavior changes based on User-Agent input.  
-- **Recommendation:** Normalize responses and avoid leaking special logic via UA detection.
-
----
-
-## 4. Recommendations & Next Steps
-
-- Immediately configure missing HTTP headers (CSP, HSTS, Anti-Clickjacking).
-- Fix cookie attributes and session handling.
-- Remove sensitive or unnecessary debug information from production.
-- Review and update third-party JavaScript libraries.
-- Conduct regular vulnerability assessments.
+✍️ Prepared By
+Auni Haziqah Binti Azizi
+Matric Number: 2116050
+📅 Date: 2025-07-10
 
 
