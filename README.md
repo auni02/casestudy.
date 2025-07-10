@@ -624,7 +624,7 @@ Date: 2025-06-15
 **Target Application:** https://bpn.iium.edu.my  
 **Tool Used:** OWASP ZAP 2.16.1  
 **Date of Scan:** 2025-06-16  
-**Scanned By:** Nur Atiqah Binti Mat Jusoh  
+**Scanned By:** Auni Haziqah Binti Azizi  
 **Scan Type:** Passive Scan  
 **Scan Duration:** 10:15 AM – 10:44 AM  
 
